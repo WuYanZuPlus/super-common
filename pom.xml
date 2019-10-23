@@ -7,6 +7,9 @@
     <version>${revision}</version>
     <name>common-spring-mvc</name>
     <description>Demo project for Spring Boot</description>
+    <modules>
+        <module>spring-mvc-excel</module>
+    </modules>
 
     <properties>
         <repo>-RELEASE</repo>
