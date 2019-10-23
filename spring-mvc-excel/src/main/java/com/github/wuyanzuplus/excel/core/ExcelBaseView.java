@@ -30,7 +30,7 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
 
     private String sheetname;
 
-    private ExcelHandler[] ExcelHandlers = new ExcelHandler[0];
+    private ExcelHandler[] excelHandlers = new ExcelHandler[0];
 
     @Override
     protected void buildExcelDocument(Map<String, Object> map, Workbook workbook, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -73,17 +73,17 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
     protected void setRow(Row row, T datum) {
         ExcelHandler[] metas = getExcelHandlers();
         for (int i = 0; i < metas.length; i++) {
-            ExcelHandler ExcelHandler = metas[i];
-            Object val = readField(datum, ExcelHandler);
-            row.createCell(i).setCellValue(val == null ? "" : val.toString());
+            ExcelHandler excelHandler = metas[i];
+            Object val = readField(datum, excelHandler);
+            row.createCell(i).setCellValue(excelHandler.resolveExportValue(val));
         }
     }
 
-    protected Object readField(T datum, ExcelHandler ExcelHandler) {
+    protected Object readField(T datum, ExcelHandler excelHandler) {
         try {
-            return FieldUtils.readDeclaredField(datum, ExcelHandler.getFieldName(), true);
+            return FieldUtils.readDeclaredField(datum, excelHandler.getFieldName(), true);
         } catch (IllegalAccessException e) {
-            log.warn("字段导出失败: {} - {}", ExcelHandler.getTitleName(), e.getMessage());
+            log.warn("字段导出失败: {} - {}", excelHandler.getTitleName(), e.getMessage());
         }
         return null;
     }
@@ -97,7 +97,7 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
     }
 
     protected ExcelHandler[] getExcelHandlers() {
-        return ExcelHandlers;
+        return excelHandlers;
     }
 
 }
