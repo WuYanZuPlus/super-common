@@ -62,8 +62,7 @@ public interface ExcelHandler {
         ValueExportResolver valueExportResolver = getValueExportResolver();
         if (valueExportResolver != null) {
             return valueExportResolver.exportResolve(val);
-        } else {
-            return val == null ? "" : val.toString();
         }
+        return val == null ? "" : val.toString();
     }
 }

@@ -8,6 +8,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.LinkedList;
@@ -18,6 +19,13 @@ import java.util.List;
  */
 @Slf4j
 public class ExcelUtil {
+    private ExcelUtil() {
+    }
+
+    @SneakyThrows
+    public static List<String[]> readExcel(MultipartFile file) {
+        return readExcel(file.getOriginalFilename(), file.getInputStream());
+    }
 
     public static List<String[]> readExcel(String filename, InputStream inputStream) {
         Workbook workBook = createWorkBook(filename, inputStream);
@@ -92,6 +100,14 @@ public class ExcelUtil {
         return "";
     }
 
+    /**
+     * 导入: 将excel行数据转换为对应实体属性值
+     *
+     * @param target  目标实体
+     * @param rowData excel行数据
+     * @param values  枚举值（all）
+     * @return 目标实体
+     */
     public static <T> T transformData(T target, String[] rowData, ExcelHandler[] values) {
         for (int i = 0; i < values.length; i++) {
             String datum = rowData[i];
@@ -105,7 +121,14 @@ public class ExcelUtil {
         return target;
     }
 
-    public static boolean checkTitle(String[] titles, ExcelHandler[] metas) {
+    /**
+     * 判断标题是否合法
+     *
+     * @param titles 标题
+     * @param metas  枚举值（all）
+     * @return true legal
+     */
+    public static boolean isTitleLegal(String[] titles, ExcelHandler[] metas) {
         for (int i = 0, length = metas.length; i < length; i++) {
             if (!metas[i].getTitleName().equals(titles[i])) {
                 return false;
@@ -113,4 +136,24 @@ public class ExcelUtil {
         }
         return true;
     }
+
+    /**
+     * 判断excel行数据是否合法
+     *
+     * @param rowData 行数据
+     * @param values  枚举值（all）
+     * @return true legal
+     */
+    public static boolean isRowLegal(String[] rowData, ExcelHandler[] values) {
+        for (int i = 0; i < values.length; i++) {
+            ExcelHandler columnEnum = values[i];
+            String str = rowData[i];
+            String error = columnEnum.checkValue(str);
+            if (StringUtils.isNotBlank(error)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

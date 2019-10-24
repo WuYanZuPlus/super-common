@@ -28,7 +28,7 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
 
     private String filename;
 
-    private String sheetname;
+    private String sheetName;
 
     private ExcelHandler[] excelHandlers = new ExcelHandler[0];
 
@@ -42,7 +42,7 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
         // 文件名外的双引号处理firefox的空格截断问题
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, String.format("attachment; filename=\"%s\"", filename0));
 
-        Sheet sheet = workbook.createSheet(getSheetname(map));
+        Sheet sheet = workbook.createSheet(getSheetName(map));
         sheet.setDefaultColumnWidth(30);
 
         AtomicInteger rowCount = new AtomicInteger(0);
@@ -92,8 +92,8 @@ public abstract class ExcelBaseView<T> extends AbstractXlsxView {
         return (String) map.getOrDefault("filename", filename);
     }
 
-    protected String getSheetname(Map<String, Object> map) {
-        return (String) map.getOrDefault("sheetname", sheetname);
+    protected String getSheetName(Map<String, Object> map) {
+        return (String) map.getOrDefault("sheetName", sheetName);
     }
 
     protected ExcelHandler[] getExcelHandlers() {

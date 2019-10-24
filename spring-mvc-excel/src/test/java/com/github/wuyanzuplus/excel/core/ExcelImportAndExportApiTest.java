@@ -2,7 +2,6 @@ package com.github.wuyanzuplus.excel.core;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -17,8 +16,9 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author daniel.hu
@@ -57,15 +57,15 @@ public class ExcelImportAndExportApiTest {
      */
     @SneakyThrows
     private List<ApiEntity> importApi(MultipartFile file) {
-        List<String[]> list = ExcelUtil.readExcel(file.getOriginalFilename(), file.getInputStream());
+        List<String[]> list = ExcelUtil.readExcel(file);
         List<ApiEntity> entities = new ArrayList<>();
         if (!list.isEmpty()) {
-            if (!ExcelUtil.checkTitle(list.get(0), ApiTemplateEnum.values())) {
+            if (!ExcelUtil.isTitleLegal(list.get(0), ApiTemplateEnum.values())) {
                 throw new ExcelResolvingException(ExcelImportErrorEnum.FILE_TITLE_ERROR.value);
             }
             for (int i = 1; i < list.size(); i++) {
                 String[] rowData = list.get(i);
-                if (!isRowOk(rowData)) {
+                if (!ExcelUtil.isRowLegal(rowData, ApiTemplateEnum.values())) {
                     continue;
                 }
                 ApiEntity apiEntity = new ApiEntity();
@@ -73,18 +73,6 @@ public class ExcelImportAndExportApiTest {
             }
         }
         return entities;
-    }
-
-    private boolean isRowOk(String[] rowData) {
-        for (ApiTemplateEnum columnEnum : ApiTemplateEnum.values()) {
-            int colNum = columnEnum.ordinal();
-            String str = rowData[colNum];
-            String error = columnEnum.checkValue(str);
-            if (StringUtils.isNotBlank(error)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Test
