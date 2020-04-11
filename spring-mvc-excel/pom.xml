@@ -9,6 +9,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>spring-mvc-excel</artifactId>
+    <name>spring-mvc-excel</name>
     <dependencies>
         <dependency>
             <groupId>org.apache.poi</groupId>
