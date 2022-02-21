@@ -8,15 +8,15 @@
         <version>7</version>
     </parent>
     <groupId>com.github.wuyanzuplus</groupId>
-    <artifactId>common-spring-mvc</artifactId>
+    <artifactId>super-common</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
-    <name>common-spring-mvc</name>
-    <url>https://github.com/WuYanZuPlus/common-spring-mvc.git</url>
-    <description>A Common Framework for Spring MVC</description>
+    <name>super-common</name>
+    <url>https://github.com/WuYanZuPlus/super-common.git</url>
+    <description>A Super Common Framework</description>
 
     <modules>
-        <module>spring-mvc-excel</module>
+        <module>common-excel</module>
     </modules>
 
     <properties>
@@ -200,9 +200,9 @@
     </licenses>
     <scm>
         <tag>master</tag>
-        <url>git@github.com:WuYanZuPlus/common-spring-mvc.git</url>
-        <connection>scm:git:git@github.com:WuYanZuPlus/common-spring-mvc.git</connection>
-        <developerConnection>scm:git:git@github.com:WuYanZuPlus/common-spring-mvc.git</developerConnection>
+        <url>git@github.com:WuYanZuPlus/super-common.git</url>
+        <connection>scm:git:git@github.com:WuYanZuPlus/super-common.git</connection>
+        <developerConnection>scm:git:git@github.com:WuYanZuPlus/super-common.git</developerConnection>
     </scm>
     <developers>
         <developer>

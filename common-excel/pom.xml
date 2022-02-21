@@ -4,12 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.github.wuyanzuplus</groupId>
-        <artifactId>common-spring-mvc</artifactId>
+        <artifactId>super-common</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>spring-mvc-excel</artifactId>
-    <name>spring-mvc-excel</name>
+    <artifactId>common-excel</artifactId>
+    <name>common-excel</name>
     <dependencies>
         <dependency>
             <groupId>org.apache.poi</groupId>
