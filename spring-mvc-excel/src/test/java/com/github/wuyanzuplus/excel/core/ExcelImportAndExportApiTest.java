@@ -57,7 +57,7 @@ public class ExcelImportAndExportApiTest {
      */
     @SneakyThrows
     private List<ApiEntity> importApi(MultipartFile file) {
-        List<String[]> list = ExcelUtil.readExcel(file);
+        List<String[]> list = ExcelUtil.readExcelWithFirstSheet(file);
         List<ApiEntity> entities = new ArrayList<>();
         if (!list.isEmpty()) {
             if (!ExcelUtil.isTitleLegal(list.get(0), ApiTemplateEnum.values())) {

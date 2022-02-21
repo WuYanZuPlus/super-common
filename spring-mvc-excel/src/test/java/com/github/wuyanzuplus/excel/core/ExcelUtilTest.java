@@ -19,7 +19,7 @@ public class ExcelUtilTest {
     @Test
     public void 处理单元格格式() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_格式转换.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_格式转换.xlsx"));
-        List<String[]> list = ExcelUtil.readExcel(file.getOriginalFilename(), file.getInputStream());
+        List<String[]> list = ExcelUtil.readExcelWithFirstSheet(file.getOriginalFilename(), file.getInputStream());
 
         assertEquals(2, list.size());
         String[] array1 = list.get(0);
