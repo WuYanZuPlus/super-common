@@ -42,4 +42,12 @@ public class ExcelUtilTest {
 
     }
 
+    @Test
+    public void convertToCellName() {
+        assertEquals("", ExcelUtil.convertToCellName(1, 0));
+        assertEquals("A1", ExcelUtil.convertToCellName(1, 1));
+        assertEquals("Z26", ExcelUtil.convertToCellName(26, 26));
+        assertEquals("AA1", ExcelUtil.convertToCellName(1, 27));
+    }
+
 }

@@ -123,7 +123,7 @@ public class ExcelImportAndExportApiTest {
     }
 
     @Test
-    public void 导入_内容异常_error() throws IOException {
+    public void 导入_内容异常不统计错误_error() throws IOException {
         // 内容异常不抛出,可记录
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_内容异常.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_内容异常.xlsx"));
         List<ApiEntity> entities = ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class);
@@ -134,5 +134,25 @@ public class ExcelImportAndExportApiTest {
                 .hasFieldOrPropertyWithValue("apiName", "接口2")
                 .hasFieldOrPropertyWithValue("apiCode", "code2")
                 .hasFieldOrPropertyWithValue("apiUrl", "post:/project/user/api2");
+    }
+
+    @Test
+    public void 导入_内容异常统计错误_error() throws IOException {
+        // 内容异常不抛出,可记录
+        MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_内容异常.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_内容异常.xlsx"));
+        Map<String, List<String>> errorMap = new HashMap<>();
+        List<ApiEntity> entities2 = ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class, errorMap);
+
+        assertEquals(1, entities2.size());
+        assertThat(entities2.get(0))
+                .hasFieldOrPropertyWithValue("project", "权限管理")
+                .hasFieldOrPropertyWithValue("apiName", "接口2")
+                .hasFieldOrPropertyWithValue("apiCode", "code2")
+                .hasFieldOrPropertyWithValue("apiUrl", "post:/project/user/api2");
+
+        assertNotNull(errorMap);
+        assertEquals(2, errorMap.keySet().size());
+        System.out.println(errorMap);
+
     }
 }

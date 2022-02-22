@@ -9,6 +9,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
@@ -175,20 +176,41 @@ public class ExcelUtil {
     /**
      * 判断excel行数据是否合法
      *
-     * @param rowData 行数据
-     * @param values  枚举值（all）
-     * @return true legal
+     * @param rowData  行数据
+     * @param values   枚举值（all）
+     * @param rowNum   标识在excel中的行数
+     * @param errorMap 错误集合
+     * @return true 合法
      */
-    public static boolean isRowLegal(String[] rowData, ExcelHandler[] values) {
+    private static boolean isRowLegal(String[] rowData, ExcelHandler[] values, int rowNum, Map<String, List<String>> errorMap) {
+        boolean needErrorStat = errorMap == null;
         for (int i = 0; i < values.length; i++) {
             ExcelHandler columnEnum = values[i];
             String str = rowData[i];
             String error = columnEnum.checkImportValue(str);
             if (StringUtils.isNotBlank(error)) {
+                if (!needErrorStat) {
+                    appendErrorMessage(errorMap, rowNum, i, error);
+                }
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * 记录错误
+     *
+     * @param errorMap 错误集合
+     * @param rowNum   错误行
+     * @param colNum   错误列
+     * @param error    错误
+     */
+    public static void appendErrorMessage(@NonNull Map<String, List<String>> errorMap, int rowNum, int colNum, String error) {
+        List<String> list = CollectionUtils.isEmpty(errorMap.get(error)) ? new ArrayList<>() : errorMap.get(error);
+        String errorCoordinates = convertToCellName(rowNum + 1, colNum + 1);
+        list.add(errorCoordinates);
+        errorMap.put(error, list);
     }
 
     /**
@@ -201,20 +223,35 @@ public class ExcelUtil {
      * @return 目标对象的集合
      */
     public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz) {
-        return parseExcel(file, enumValues, clazz, true);
+        return parseExcel(file, enumValues, clazz, null, true);
     }
 
     /**
      * 解析导入的excel文件
      *
-     * @param file          导入的excel文件
-     * @param enumValues    Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param file       导入的excel文件
+     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @param errorMap   错误记录
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap) {
+        return parseExcel(file, enumValues, clazz, errorMap, true);
+    }
+
+    /**
+     * 解析导入的excel文件
+     *
      * @param clazz<T>      目标类（即Excel行数据转换之后的目标实体类）
      * @param <T>           ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @param file          导入的excel文件
+     * @param enumValues    Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param errorMap      错误记录
      * @param allowDeclared Excel与目标对象数据转换时是否要考虑目标的父类
      * @return 目标对象的集合
      */
-    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, boolean allowDeclared) {
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap, boolean allowDeclared) {
         List<String[]> list = readExcelWithFirstSheet(file);
         List<T> objects = new ArrayList<>();
         if (!list.isEmpty()) {
@@ -223,7 +260,7 @@ public class ExcelUtil {
             }
             for (int i = 1; i < list.size(); i++) {
                 String[] rowData = list.get(i);
-                if (!isRowLegal(rowData, enumValues)) {
+                if (!isRowLegal(rowData, enumValues, i, errorMap)) {
                     continue;
                 }
                 if (allowDeclared) {
@@ -272,5 +309,35 @@ public class ExcelUtil {
             FieldUtils.writeField(target, value.getFieldName(), value.resolveImportValue(datum), true);
         }
         return target;
+    }
+
+    /**
+     * Excel 列号 数字-->字母
+     * <pre>
+     *     第一行第一列  —> A1
+     * </pre>
+     *
+     * @param rowNum      excel 行号
+     * @param columnIndex excel 列下标
+     */
+    public static String convertToCellName(int rowNum, int columnIndex) {
+        if (columnIndex <= 0) {
+            return "";
+        }
+        StringBuilder columnStr = new StringBuilder();
+        columnIndex--;
+        if (columnStr.length() > 0) {
+            columnIndex--;
+        }
+        columnStr.insert(0, ((char) (columnIndex % 26 + (int) 'A')));
+        columnIndex = (columnIndex - columnIndex % 26) / 26;
+        while (columnIndex > 0) {
+            if (columnStr.length() > 0) {
+                columnIndex--;
+            }
+            columnStr.insert(0, ((char) (columnIndex % 26 + (int) 'A')));
+            columnIndex = (columnIndex - columnIndex % 26) / 26;
+        }
+        return columnStr + "" + rowNum;
     }
 }
