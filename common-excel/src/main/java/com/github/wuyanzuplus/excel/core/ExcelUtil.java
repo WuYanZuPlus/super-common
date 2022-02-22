@@ -158,6 +158,66 @@ public class ExcelUtil {
     }
 
     /**
+     * 解析导入的excel文件
+     *
+     * @param file       导入的excel文件
+     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz) {
+        return parseExcel(file, enumValues, clazz, null, true);
+    }
+
+    /**
+     * 解析导入的excel文件
+     *
+     * @param file       导入的excel文件
+     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @param errorMap   错误记录（传null时代表不统计错误）
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap) {
+        return parseExcel(file, enumValues, clazz, errorMap, true);
+    }
+
+    /**
+     * 解析导入的excel文件
+     *
+     * @param clazz<T>      目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>           ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @param file          导入的excel文件
+     * @param enumValues    Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param errorMap      错误记录
+     * @param allowDeclared Excel与目标对象数据转换时是否要考虑目标的父类
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap, boolean allowDeclared) {
+        List<String[]> list = readExcelWithFirstSheet(file);
+        List<T> objects = new ArrayList<>();
+        if (!list.isEmpty()) {
+            if (!isTitleLegal(list.get(0), enumValues)) {
+                throw new ExcelResolvingException(ExcelImportErrorEnum.FILE_TITLE_ERROR.getValue());
+            }
+            for (int i = 1; i < list.size(); i++) {
+                String[] rowData = list.get(i);
+                if (!isRowLegal(rowData, enumValues, i, errorMap)) {
+                    continue;
+                }
+                if (allowDeclared) {
+                    objects.add(transformData(clazz, rowData, enumValues));
+                } else {
+                    objects.add(transformDeclaredData(clazz, rowData, enumValues));
+                }
+            }
+        }
+        return objects;
+    }
+
+    /**
      * 判断标题是否合法
      *
      * @param titles 标题行数组（只针对单行标题）
@@ -211,66 +271,6 @@ public class ExcelUtil {
         String errorCoordinates = convertToCellName(rowNum + 1, colNum + 1);
         list.add(errorCoordinates);
         errorMap.put(error, list);
-    }
-
-    /**
-     * 解析导入的excel文件
-     *
-     * @param file       导入的excel文件
-     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
-     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
-     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
-     * @return 目标对象的集合
-     */
-    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz) {
-        return parseExcel(file, enumValues, clazz, null, true);
-    }
-
-    /**
-     * 解析导入的excel文件
-     *
-     * @param file       导入的excel文件
-     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
-     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
-     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
-     * @param errorMap   错误记录
-     * @return 目标对象的集合
-     */
-    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap) {
-        return parseExcel(file, enumValues, clazz, errorMap, true);
-    }
-
-    /**
-     * 解析导入的excel文件
-     *
-     * @param clazz<T>      目标类（即Excel行数据转换之后的目标实体类）
-     * @param <T>           ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
-     * @param file          导入的excel文件
-     * @param enumValues    Enum.enumValues() 枚举类转变为一个枚举类型的数组
-     * @param errorMap      错误记录
-     * @param allowDeclared Excel与目标对象数据转换时是否要考虑目标的父类
-     * @return 目标对象的集合
-     */
-    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, Map<String, List<String>> errorMap, boolean allowDeclared) {
-        List<String[]> list = readExcelWithFirstSheet(file);
-        List<T> objects = new ArrayList<>();
-        if (!list.isEmpty()) {
-            if (!isTitleLegal(list.get(0), enumValues)) {
-                throw new ExcelResolvingException(ExcelImportErrorEnum.FILE_TITLE_ERROR.getValue());
-            }
-            for (int i = 1; i < list.size(); i++) {
-                String[] rowData = list.get(i);
-                if (!isRowLegal(rowData, enumValues, i, errorMap)) {
-                    continue;
-                }
-                if (allowDeclared) {
-                    objects.add(transformData(clazz, rowData, enumValues));
-                } else {
-                    objects.add(transformDeclaredData(clazz, rowData, enumValues));
-                }
-            }
-        }
-        return objects;
     }
 
     /**
