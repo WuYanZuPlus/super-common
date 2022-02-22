@@ -8,13 +8,11 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.lang.NonNull;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Author: daniel.hu
@@ -163,7 +161,7 @@ public class ExcelUtil {
      *
      * @param titles 标题行数组（只针对单行标题）
      * @param metas  枚举值（all）
-     * @return true legal
+     * @return true 合法
      */
     public static boolean isTitleLegal(String[] titles, ExcelHandler[] metas) {
         for (int i = 0, length = metas.length; i < length; i++) {
@@ -185,7 +183,7 @@ public class ExcelUtil {
         for (int i = 0; i < values.length; i++) {
             ExcelHandler columnEnum = values[i];
             String str = rowData[i];
-            String error = columnEnum.checkValue(str);
+            String error = columnEnum.checkImportValue(str);
             if (StringUtils.isNotBlank(error)) {
                 return false;
             }
@@ -194,22 +192,65 @@ public class ExcelUtil {
     }
 
     /**
+     * 解析导入的excel文件
+     *
+     * @param file       导入的excel文件
+     * @param enumValues Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param clazz<T>   目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>        ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz) {
+        return parseExcel(file, enumValues, clazz, true);
+    }
+
+    /**
+     * 解析导入的excel文件
+     *
+     * @param file          导入的excel文件
+     * @param enumValues    Enum.enumValues() 枚举类转变为一个枚举类型的数组
+     * @param clazz<T>      目标类（即Excel行数据转换之后的目标实体类）
+     * @param <T>           ? extends T，表示类型的上界，表示参数化类型的可能是T 或是 T的子类;
+     * @param allowDeclared Excel与目标对象数据转换时是否要考虑目标的父类
+     * @return 目标对象的集合
+     */
+    public static <T> List<T> parseExcel(MultipartFile file, ExcelHandler[] enumValues, @NonNull Class<? extends T> clazz, boolean allowDeclared) {
+        List<String[]> list = readExcelWithFirstSheet(file);
+        List<T> objects = new ArrayList<>();
+        if (!list.isEmpty()) {
+            if (!isTitleLegal(list.get(0), enumValues)) {
+                throw new ExcelResolvingException(ExcelImportErrorEnum.FILE_TITLE_ERROR.getValue());
+            }
+            for (int i = 1; i < list.size(); i++) {
+                String[] rowData = list.get(i);
+                if (!isRowLegal(rowData, enumValues)) {
+                    continue;
+                }
+                if (allowDeclared) {
+                    objects.add(transformData(clazz, rowData, enumValues));
+                } else {
+                    objects.add(transformDeclaredData(clazz, rowData, enumValues));
+                }
+            }
+        }
+        return objects;
+    }
+
+    /**
      * 导入: 将excel行数据转换为对应实体属性值 (只考虑当前类)
      *
-     * @param target  目标实体
+     * @param clazz   目标类（即Excel行数据转换之后的目标实体类）
      * @param rowData excel行数据
      * @param values  枚举值（all）
      * @return 目标实体
      */
-    public static <T> T transformDeclaredData(T target, String[] rowData, ExcelHandler[] values) {
+    @SneakyThrows
+    public static <T> T transformDeclaredData(Class<? extends T> clazz, String[] rowData, ExcelHandler[] values) {
+        T target = clazz.newInstance();
         for (int i = 0; i < values.length; i++) {
             String datum = rowData[i];
             ExcelHandler value = values[i];
-            try {
-                FieldUtils.writeDeclaredField(target, value.getFieldName(), value.resolveImportValue(datum), true);
-            } catch (IllegalAccessException e) {
-                log.error("安全权限异常", e);
-            }
+            FieldUtils.writeDeclaredField(target, value.getFieldName(), value.resolveImportValue(datum), true);
         }
         return target;
     }
@@ -217,20 +258,18 @@ public class ExcelUtil {
     /**
      * 导入: 将excel行数据转换为对应实体属性值 (考虑父类)
      *
-     * @param target  目标实体
+     * @param clazz   目标类（即Excel行数据转换之后的目标实体类）
      * @param rowData excel行数据
      * @param values  枚举值（all）
      * @return 目标实体
      */
-    public static <T> T transformData(T target, String[] rowData, ExcelHandler[] values) {
+    @SneakyThrows
+    public static <T> T transformData(Class<? extends T> clazz, String[] rowData, ExcelHandler[] values) {
+        T target = clazz.newInstance();
         for (int i = 0; i < values.length; i++) {
             String datum = rowData[i];
             ExcelHandler value = values[i];
-            try {
-                FieldUtils.writeField(target, value.getFieldName(), value.resolveImportValue(datum), true);
-            } catch (IllegalAccessException e) {
-                log.error("安全权限异常", e);
-            }
+            FieldUtils.writeField(target, value.getFieldName(), value.resolveImportValue(datum), true);
         }
         return target;
     }

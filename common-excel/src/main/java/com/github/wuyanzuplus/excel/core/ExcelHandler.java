@@ -6,32 +6,53 @@ import org.apache.commons.lang3.StringUtils;
  * @author daniel.hu
  */
 public interface ExcelHandler {
+    /**
+     * 获取Excel首行标题名称
+     */
     String getTitleName();
 
+    /**
+     * 获取Excel标题对应的属性名
+     */
     String getFieldName();
 
+    /**
+     * 是否必填（默认非必填）
+     */
     default boolean isRequired() {
         return false;
     }
 
+    /**
+     * 字段最大长度
+     */
     int getMaxLength();
 
+    /**
+     * 获取校验器
+     */
     default ValueValidator getValueValidator() {
         return null;
     }
 
+    /**
+     * 获取导入值处理器
+     */
     default ValueImportResolver getValueImportResolver() {
         return null;
     }
 
+    /**
+     * 获取导出值处理器
+     */
     default ValueExportResolver getValueExportResolver() {
         return null;
     }
 
     /**
-     * 值校验
+     * 导入时值校验
      */
-    default String checkValue(String val) {
+    default String checkImportValue(String val) {
         if (isRequired() && StringUtils.isBlank(val)) {
             return ExcelImportErrorEnum.NULL_VALUE.name();
         }

@@ -33,19 +33,19 @@ public enum ApiTemplateEnum implements ExcelHandler {
     /**
      * 标题名称
      */
-    private String titleName;
+    private final String titleName;
     /**
      * 字段名称
      */
-    private String fieldName;
+    private final String fieldName;
     /**
      * 是否必填
      */
-    private boolean required;
+    private final boolean required;
     /**
      * 最大长度
      */
-    private int maxLength;
+    private final int maxLength;
 
     /**
      * 校验（便于错误统计）

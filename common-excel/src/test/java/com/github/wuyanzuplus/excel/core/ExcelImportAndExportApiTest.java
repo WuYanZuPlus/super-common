@@ -1,6 +1,5 @@
 package com.github.wuyanzuplus.excel.core;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -9,12 +8,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,34 +50,11 @@ public class ExcelImportAndExportApiTest {
         return api;
     }
 
-    /**
-     * 导入功能
-     */
-    @SneakyThrows
-    private List<ApiEntity> importApi(MultipartFile file) {
-        List<String[]> list = ExcelUtil.readExcelWithFirstSheet(file);
-        List<ApiEntity> entities = new ArrayList<>();
-        if (!list.isEmpty()) {
-            if (!ExcelUtil.isTitleLegal(list.get(0), ApiTemplateEnum.values())) {
-                throw new ExcelResolvingException(ExcelImportErrorEnum.FILE_TITLE_ERROR.value);
-            }
-            for (int i = 1; i < list.size(); i++) {
-                String[] rowData = list.get(i);
-                if (!ExcelUtil.isRowLegal(rowData, ApiTemplateEnum.values())) {
-                    continue;
-                }
-                ApiEntity apiEntity = new ApiEntity();
-                entities.add(ExcelUtil.transformData(apiEntity, rowData, ApiTemplateEnum.values()));
-            }
-        }
-        return entities;
-    }
-
     @Test
     public void 导入_正常数据_success() throws IOException {
 
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_正常.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_正常.xlsx"));
-        List<ApiEntity> entities = importApi(file);
+        List<ApiEntity> entities = ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class);
 
         assertEquals(2, entities.size());
         assertThat(entities.get(0))
@@ -132,7 +107,7 @@ public class ExcelImportAndExportApiTest {
     @Test
     public void 导入_空数据_error() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_空数据.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_空数据.xlsx"));
-        List<ApiEntity> entities = importApi(file);
+        List<ApiEntity> entities = ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class);
         assertTrue(entities.isEmpty());
     }
 
@@ -140,10 +115,10 @@ public class ExcelImportAndExportApiTest {
     public void 导入_标题错误_error() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_标题错误.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_标题错误.xlsx"));
         try {
-            importApi(file);
+            ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class);
             fail();
         } catch (ExcelResolvingException e) {
-            assertEquals(ExcelImportErrorEnum.FILE_TITLE_ERROR.value, e.getMessage());
+            assertEquals(ExcelImportErrorEnum.FILE_TITLE_ERROR.getValue(), e.getMessage());
         }
     }
 
@@ -151,7 +126,7 @@ public class ExcelImportAndExportApiTest {
     public void 导入_内容异常_error() throws IOException {
         // 内容异常不抛出,可记录
         MockMultipartFile file = new MockMultipartFile("file", "资源导入模板_内容异常.xlsx", "multipart/form-data", Object.class.getResourceAsStream("/资源导入模板_内容异常.xlsx"));
-        List<ApiEntity> entities = importApi(file);
+        List<ApiEntity> entities = ExcelUtil.parseExcel(file, ApiTemplateEnum.values(), ApiEntity.class);
 
         assertEquals(1, entities.size());
         assertThat(entities.get(0))
