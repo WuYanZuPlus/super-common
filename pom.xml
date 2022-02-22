@@ -21,7 +21,7 @@
 
     <properties>
         <repo>-RELEASE</repo>
-        <revision>0.0.3${repo}</revision>
+        <revision>0.0.4${repo}</revision>
 
         <spring-boot.version>2.2.0.RELEASE</spring-boot.version>
         <spring.version>5.0.10.RELEASE</spring.version>
